@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/mealplan")
+@CrossOrigin(origins = "http://localhost:63342") // ✅ Разрешить запросы с фронтенда// Разрешаем запросы с фронтенда
 public class MealPlanController {
 
     private final GoGPTService goGPTService;
@@ -13,8 +14,11 @@ public class MealPlanController {
         this.goGPTService = goGPTService;
     }
 
-    @GetMapping("/{params}")
-    public String generateMealPlan(@PathVariable String params) {
+    @GetMapping("/{age}/{weight}/{activity}")
+
+    public String generateMealPlan(@PathVariable int age, @PathVariable int weight, @PathVariable String activity) {
+        // Формируем параметры для генерации меню
+        String params = String.format("возраст_%d_вес_%d_активность_%s", age, weight, activity);
         return goGPTService.getMealPlan(params);
     }
 }
