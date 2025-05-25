@@ -2,6 +2,7 @@ package com.example.demon.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -12,13 +13,15 @@ import java.util.Map;
 @Service
 public class GoGPTService {
 
-    private final String API_URL = "https://api.gogpt.ru/v1/chat/completions"; // Проверь правильность URL
-    private final String API_KEY = "Xk-WILVffFxPZNIYoosIrHWmh2mI9AQDrbCGF37LAdXtWM3Qdd"; // Убедись, что ключ актуален
+    private final String API_URL = "https://api.gogpt.ru/v1/chat/completions"; // ✅ Проверь правильность URL
+
+    @Value("${api.key}") // ✅ Загружаем ключ из application.properties
+    private String apiKey;
 
     public String getMealPlan(String userParams) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + API_KEY);
+        headers.set("Authorization", "Bearer " + apiKey); // ✅ Больше нет ключа в коде!
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> requestBody = new HashMap<>();
@@ -33,20 +36,15 @@ public class GoGPTService {
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(API_URL, request, String.class);
-
-            // Логирование полного ответа
             System.out.println("Ответ API: " + response.getBody());
 
-            // Парсим JSON
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
-            // Проверяем, есть ли ошибки
             if (rootNode.has("error")) {
                 return "Ошибка API: " + rootNode.get("error").get("message").asText();
             }
 
-            // Достаем текст ответа
             JsonNode choicesNode = rootNode.get("choices");
             if (choicesNode != null && choicesNode.isArray()) {
                 JsonNode firstChoice = choicesNode.get(0);
