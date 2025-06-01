@@ -21,7 +21,7 @@ public class GoGPTService {
     public String getMealPlan(String userParams) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + apiKey); // ✅ Больше нет ключа в коде!
+        headers.set("Authorization", "Bearer " + apiKey); // 
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> requestBody = new HashMap<>();

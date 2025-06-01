@@ -1,0 +1,223 @@
+openapi: 3.0.1
+info:
+  title: Nutrition AI Service API
+  version: 1.0.0
+  description: API для генерации персонализированных рационов питания
+
+servers:
+  - url: https://api.nutritionai.com/v1
+    description: Production server
+
+paths:
+  # ========== User Management ==========
+  /api/user/register:
+    post:
+      tags: [User]
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /api/user/login:
+    post:
+      tags: [User]
+      summary: Авторизация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+
+  /api/user/profile/{userId}:
+    get:
+      tags: [User]
+      summary: Получение данных профиля
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          description: Данные профиля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+    put:
+      tags: [User]
+      summary: Обновление данных пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Профиль обновлен
+
+  # ========== Meal Plan ==========
+  /api/meal-plan/generate:
+    post:
+      tags: [MealPlan]
+      summary: Генерация рациона
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanRequest'
+      responses:
+        '200':
+          description: Сгенерированный рацион
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+
+  /api/meal-plan/{userId}:
+    get:
+      tags: [MealPlan]
+      summary: Получение текущего рациона
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          description: Текущий рацион
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+
+  # ========== Recipes ==========
+  /api/recipes:
+    get:
+      tags: [Recipes]
+      summary: Список рецептов
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          description: Номер страницы
+      responses:
+        '200':
+          description: Список рецептов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeShort'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # User Schemas
+    UserRegistration:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        height:
+          type: number
+        weight:
+          type: number
+        activityLevel:
+          type: string
+          enum: [low, medium, high]
+
+    # Meal Plan Schemas
+    MealPlanRequest:
+      type: object
+      properties:
+        calories:
+          type: integer
+        allergies:
+          type: array
+          items:
+            type: string
+        preferences:
+          type: array
+          items:
+            type: string
+
+    MealPlan:
+      type: object
+      properties:
+        breakfast:
+          $ref: '#/components/schemas/Meal'
+        lunch:
+          $ref: '#/components/schemas/Meal'
+        dinner:
+          $ref: '#/components/schemas/Meal'
+
+    Meal:
+      type: object
+      properties:
+        name:
+          type: string
+        calories:
+          type: number
+        ingredients:
+          type: array
+          items:
+            type: string
+
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID пользователя
