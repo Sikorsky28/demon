@@ -12,12 +12,14 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/auth/**")
-                        .allowedOrigins("http://localhost:63342") // Разрешаем ваш фронтенд
-                        .allowedMethods("POST", "GET", "OPTIONS")
-                        .allowedHeaders("*");
+                registry.addMapping("/**") // ✅ Разрешить для всех эндпоинтов
+                        .allowedOrigins("http://localhost:63342")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("Authorization", "Content-Type", "Accept")
+                        .exposedHeaders("Authorization")
+                        .allowCredentials(true)
+                        .maxAge(3600);
             }
         };
     }
 }
-
