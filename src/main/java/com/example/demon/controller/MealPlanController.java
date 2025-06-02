@@ -1,6 +1,8 @@
 package com.example.demon.controller;
 
 import com.example.demon.service.GoGPTService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,7 +15,8 @@ public class MealPlanController {
     public MealPlanController(GoGPTService goGPTService) {
         this.goGPTService = goGPTService;
     }
-
+    @SecurityRequirement(name = "BearerAuth")
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{age}/{weight}/{activity}")
 
     public String generateMealPlan(@PathVariable int age, @PathVariable int weight, @PathVariable String activity) {

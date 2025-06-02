@@ -7,28 +7,25 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.Base64;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private final SecretKey secretKey;
-
-    public JwtUtil() {
-        String secret = "dGhpc2lzYXZlcnlzZWN1cmVzZWNyZXRrZXlmb3Jqd3RhdXRoZW50aWNhdGlvbg==";
-        this.secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
-    }
-
+    // Секретный ключ — должен быть не короче 32 символов (256 бит)
+    private final SecretKey secretKey = Keys.hmacShaKeyFor(
+            "your-very-strong-secret-key-that-is-32-bytes!".getBytes()
+    );
     public SecretKey getSecretKey() {
         return secretKey;
     }
+
 
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // токен на 1 час
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -37,17 +34,13 @@ public class JwtUtil {
         try {
             Claims claims = extractClaims(token);
             return username.equals(claims.getSubject()) && !isTokenExpired(claims);
-        } catch (io.jsonwebtoken.security.SignatureException e) {
-            return false;
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            return false;
         } catch (Exception e) {
             return false;
         }
     }
 
     public Claims extractClaims(String token) {
-        return Jwts.parser() // Рекомендуемый метод в JJWT 0.12.6
+        return Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)

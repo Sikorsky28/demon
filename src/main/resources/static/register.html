@@ -1,26 +1,25 @@
 <!DOCTYPE html>
+<link rel="stylesheet" href="styles.css">
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Регистрация</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Регистрация</title>
 </head>
 <body>
-<div class="container">
-    <h2>Регистрация</h2>
-    <form id="registerForm">
-        <input type="text" id="username" placeholder="Имя пользователя" required>
-        <input type="password" id="password" placeholder="Пароль" required>
-        <input type="number" id="age" placeholder="Возраст">
-        <input type="number" id="weight" placeholder="Вес">
-        <select id="activityLevel">
-            <option value="низкая">Низкая</option>
-            <option value="средняя">Средняя</option>
-            <option value="высокая">Высокая</option>
-        </select>
-        <button type="submit">Зарегистрироваться</button>
-    </form>
-</div>
+<h1>Регистрация</h1>
+<form id="registerForm">
+  <input type="text" id="username" placeholder="Имя пользователя" required><br>
+  <input type="password" id="password" placeholder="Пароль" required><br>
+  <input type="number" id="age" placeholder="Возраст"><br>
+  <input type="number" id="weight" placeholder="Вес"><br>
+  <select id="activityLevel">
+    <option value="низкая">Низкая</option>
+    <option value="средняя">Средняя</option>
+    <option value="высокая">Высокая</option>
+  </select><br>
+  <button type="submit">Зарегистрироваться</button>
+</form>
+
 <script src="script.js"></script>
 </body>
 </html>
