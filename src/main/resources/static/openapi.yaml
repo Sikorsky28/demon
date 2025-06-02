@@ -68,6 +68,44 @@
         }
       }
     },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["auth-controller"],
+        "summary": "Обновить access токен с помощью refresh токена",
+        "operationId": "refreshToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                },
+                "required": ["refreshToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Новый access токен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Недействительный refresh токен"
+          }
+        }
+      }
+    },
     "/mealplan/{age}/{weight}/{activity}": {
       "get": {
         "tags": ["meal-plan-controller"],
@@ -185,6 +223,9 @@
         "type": "object",
         "properties": {
           "token": {
+            "type": "string"
+          },
+          "refreshToken": {
             "type": "string"
           },
           "message": {

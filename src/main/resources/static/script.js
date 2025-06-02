@@ -52,10 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (res.ok) {
           localStorage.setItem("jwtToken", data.token);
+          localStorage.setItem("refreshToken", data.refreshToken);
           localStorage.setItem("username", username);
           window.location.href = "dashboard.html";
         } else {
-          alert("Ошибка входа: " + data.message);
+          alert("Ошибка входа: " + (data.message || "Неверный логин/пароль"));
         }
       } catch (err) {
         alert("Ошибка сети");
@@ -67,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Личный кабинет ---
   if (window.location.pathname.includes("dashboard.html")) {
     const token = localStorage.getItem("jwtToken");
+    const refreshToken = localStorage.getItem("refreshToken");
     const username = localStorage.getItem("username");
 
     if (!token || !username) {
@@ -75,7 +77,35 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    fetch(`http://localhost:8080/auth/user/${encodeURIComponent(username)}`, {
+    async function fetchWithTokenRetry(url, options) {
+      const res = await fetch(url, options);
+
+      if (res.status === 401 && refreshToken) {
+        // Попробовать обновить токен
+        const refreshed = await fetch("http://localhost:8080/auth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken })
+        });
+
+        if (refreshed.ok) {
+          const data = await refreshed.json();
+          localStorage.setItem("jwtToken", data.token);
+
+          // Повторить оригинальный запрос с новым токеном
+          options.headers["Authorization"] = `Bearer ${data.token}`;
+          return fetch(url, options);
+        } else {
+          alert("Сессия истекла, войдите заново");
+          window.location.href = "login.html";
+        }
+      }
+
+      return res;
+    }
+
+    // --- Загрузка данных пользователя ---
+    fetchWithTokenRetry(`http://localhost:8080/auth/user/${username}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -83,42 +113,37 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
       .then(res => res.ok ? res.json() : Promise.reject(res))
-      .then(userData => {
+      .then(data => {
         document.getElementById("userInfo").innerHTML = `
-          <h2>Привет, ${userData.username}!</h2>
-          <p>Возраст: ${userData.age}</p>
-          <p>Вес: ${userData.weight}</p>
-          <p>Активность: ${userData.activityLevel}</p>
+          <h2>Привет, ${data.username}!</h2>
+          <p><strong>Возраст:</strong> ${data.age}</p>
+          <p><strong>Вес:</strong> ${data.weight}</p>
+          <p><strong>Активность:</strong> ${data.activityLevel}</p>
+          <button id="generateMenu">Сгенерировать рацион</button>
         `;
 
-        // Обработка кнопки генерации меню
-        const generateBtn = document.getElementById("generateMenu");
-        if (generateBtn) {
-          generateBtn.addEventListener("click", async () => {
-            try {
-              const mealResponse = await fetch(`http://localhost:8080/mealplan/${userData.age}/${userData.weight}/${userData.activityLevel}`, {
-                method: "GET",
-                headers: {
-                  "Authorization": `Bearer ${token}`
-                }
-              });
+        // --- Генерация меню ---
+        document.getElementById("generateMenu").addEventListener("click", async () => {
+          const token = localStorage.getItem("jwtToken");
 
-              if (mealResponse.ok) {
-                const mealPlan = await mealResponse.text();
-                document.getElementById("nutritionInfo").innerHTML = `
-                  <h3>Ваш рацион на неделю:</h3>
-                  <pre style="white-space: pre-wrap; background-color: #f4f4f4; padding: 1em; border-radius: 6px;">${mealPlan}</pre>
-                `;
-              } else {
-                const errText = await mealResponse.text();
-                alert("Ошибка генерации рациона: " + errText);
-              }
-            } catch (err) {
-              console.error("Ошибка генерации рациона:", err);
-              alert("Ошибка при получении рациона.");
+          const res = await fetchWithTokenRetry(`http://localhost:8080/mealplan/${data.age}/${data.weight}/${encodeURIComponent(data.activityLevel)}`, {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
             }
           });
-        }
+
+          if (res.ok) {
+            const mealPlan = await res.text();
+            document.getElementById("nutritionInfo").innerHTML = `
+              <h3>📋 Ваше меню:</h3>
+              <pre>${mealPlan}</pre>
+            `;
+          } else {
+            alert("Ошибка генерации рациона");
+          }
+        });
       })
       .catch(async err => {
         const msg = await err.text?.() || "Ошибка";
